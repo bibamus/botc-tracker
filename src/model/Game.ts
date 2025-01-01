@@ -8,7 +8,16 @@ export interface Game {
 export const initialGame: Game = {
     state: 'setup',
     players: [],
-    turns: []
+    turns: [
+        {
+            turnNumber: 1,
+            phase: 'day',
+            day: {
+                nominations: []
+            },
+            night: null
+        }
+    ]
 }
 
 export  type Phase = 'day' | 'night'
@@ -21,6 +30,7 @@ export interface Player {
 
 export interface Turn {
     turnNumber: number
+    phase: Phase
     day: Day | null
     night: Night | null
 }
@@ -33,6 +43,7 @@ export interface Nomination {
     nominator: Player
     nominee: Player
     votes: Player[]
+    ended: boolean
 }
 
 export interface Night {

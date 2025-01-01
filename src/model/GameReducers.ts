@@ -1,29 +1,11 @@
 import {Game} from "./Game.ts";
+import {
+    AddNominationAction, AddVoteAction,
+    ChangePhaseAction,
+    EndNominationAction, GameAction, RemoveVoteAction,
+    UpdatePlayerNameAction
+} from "../view/game/GameAction.ts";
 
-interface BaseAction {
-    type: string
-}
-
-interface AddPlayerAction extends BaseAction {
-    type: 'addPlayer'
-}
-
-interface RemovePlayerAction extends BaseAction {
-    type: 'removePlayer'
-    playerNumber: number
-}
-
-interface UpdatePlayerNameAction extends BaseAction {
-    type: 'updatePlayerName'
-    playerNumber: number
-    name: string
-}
-
-interface StartGameAction extends BaseAction {
-    type: 'startGame'
-}
-
-export type GameAction = AddPlayerAction | RemovePlayerAction | UpdatePlayerNameAction | StartGameAction;
 
 
 // remove player and renumber the remaining players
@@ -38,28 +20,122 @@ function removePlayer(state: Game, playerNumber: number) {
     }
 }
 
+function addPlayer(state: Game) {
+    return {
+        ...state,
+        players: [...state.players, {name: '', state: 'alive', number: state.players.length + 1}]
+    } satisfies Game;
+}
+
+function updatePlayerName(state: Game, action: UpdatePlayerNameAction) {
+    return {
+        ...state,
+        players: state.players.map(player => player.number === action.playerNumber ? {
+            ...player,
+            name: action.name
+        } : player)
+    }
+}
+
+function startGame(state: Game) {
+    return {
+        ...state,
+        state: 'playing'
+    } satisfies Game;
+}
+
+function changePhase(state: Game, action: ChangePhaseAction) {
+    return {
+        ...state,
+        turns: state.turns.map(turn => ({
+            ...turn,
+            phase: action.phase
+        }))
+    }
+}
+
+function addNomination(state: Game, action: AddNominationAction) {
+    return {
+        ...state,
+        turns: state.turns.map(turn => turn.turnNumber === action.turnNumber ? {
+            ...turn,
+            day: {
+                nominations: [...turn.day!.nominations, {
+                    nominator: action.nominator,
+                    nominee: action.nominee,
+                    votes: [],
+                    ended: false
+                }]
+            }
+        } : turn)
+    }
+}
+
+function endNomination(state: Game, action: EndNominationAction) {
+    return {
+        ...state,
+        turns: state.turns.map(turn => ({
+            ...turn,
+            day: {
+                nominations: turn.day!.nominations.map(nomination => nomination === action.nomination ? {
+                    ...nomination,
+                    ended: true
+                } : nomination)
+            }
+        }))
+    } satisfies Game;
+}
+
+function addVote(state: Game, action: AddVoteAction) {
+    return {
+        ...state,
+        turns: state.turns.map(turn => ({
+            ...turn,
+            day: {
+                nominations: turn.day!.nominations.map(nomination => nomination === action.nomination ? {
+                    ...nomination,
+                    votes: [...nomination.votes, action.player]
+                } : nomination)
+            }
+        }))
+    }
+}
+
+function removeVote(state: Game, action: RemoveVoteAction) {
+    return {
+        ...state,
+        turns: state.turns.map(turn => ({
+            ...turn,
+            day: {
+                nominations: turn.day!.nominations.map(nomination => nomination === action.nomination ? {
+                    ...nomination,
+                    votes: nomination.votes.filter(player => player !== action.player)
+                } : nomination)
+            }
+        }))
+    }
+}
+
 export default function gameReducer(state: Game, action: GameAction): Game {
     switch (action.type) {
         case 'addPlayer':
-            return {
-                ...state,
-                players: [...state.players, {name: '', state: 'alive', number: state.players.length + 1}]
-            };
+            return addPlayer(state);
         case 'removePlayer':
             return removePlayer(state, action.playerNumber);
         case 'updatePlayerName':
-            return {
-                ...state,
-                players: state.players.map(player => player.number === action.playerNumber ? {
-                    ...player,
-                    name: action.name
-                } : player)
-            }
+            return updatePlayerName(state, action);
         case 'startGame':
-            return {
-                ...state,
-                state: 'playing'
-            }
+            return startGame(state);
+        case 'changePhase':
+            return changePhase(state, action);
+        case 'addNomination':
+            return addNomination(state, action);
+        case 'endNomination':
+            return endNomination(state, action);
+        case 'addVote':
+            return addVote(state, action);
+        case 'removeVote':
+            return removeVote(state, action);
         default:
             return state;
     }

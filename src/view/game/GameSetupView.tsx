@@ -1,6 +1,6 @@
 import {Game} from "../../model/Game.ts";
-import {GameAction} from "../../model/GameReducers.ts";
 import {Box, Button} from "@mui/material";
+import {GameAction} from "./GameAction.ts";
 
 const minPlayers = 5;
 
