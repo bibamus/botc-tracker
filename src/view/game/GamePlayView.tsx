@@ -1,6 +1,6 @@
-import {Game, Nomination, Phase, Player} from "../../model/Game.ts";
+import {currentPhase, Game, Nomination, Player} from "../../model/Game.ts";
 import {Box, Button, Checkbox} from "@mui/material";
-import {useEffect, useState} from "react";
+import {useState} from "react";
 import {GameAction} from "./GameAction.ts";
 
 interface GamePlayViewProps {
@@ -16,21 +16,20 @@ function GamePlayView({game, dispatch}: GamePlayViewProps) {
     }
 
     function activeNomination(): Nomination | null {
-        const turn = game.turns[currentTurn];
-        if (turn?.day === null) {
+        const phase = currentPhase(game);
+        if (phase.type !== 'day') {
             return null;
         }
-        const activeNominations = turn.day.nominations.filter(nomination => !nomination.ended);
-        return activeNominations.length > 0 ? activeNominations[0] : null;
+        return phase.nominations.find(nomination => !nomination.ended) || null;
     }
 
     function endDay() {
-        dispatch({type: 'changePhase', phase: 'night'});
-        setCurrentPhase('night');
+        console.log(currentPhase);
+        dispatch({type: 'endPhase'});
     }
 
     function endVoting() {
-        dispatch({type: 'endNomination', nomination: activeNomination()!});
+        dispatch({type: 'endNomination', nomination: activeNomination()!, phaseNumber: currentPhase(game).number});
     }
 
     function nominate(player: Player) {
@@ -38,26 +37,21 @@ function GamePlayView({game, dispatch}: GamePlayViewProps) {
             type: 'addNomination',
             nominator: currentNominator!,
             nominee: player,
-            turnNumber: game.turns[currentTurn].turnNumber
+            phaseNumber: currentPhase(game).number
         });
         setCurrentNominator(null);
     }
 
-    // @ts-ignore
-    const [currentTurn, setCurrentTurn] = useState(0);
-    const [currentPhase, setCurrentPhase] = useState<Phase>('day');
 
-    useEffect(() => {
-        setCurrentPhase(game.turns[currentTurn].phase);
-    }, [currentTurn]);
+
 
     const [currentNominator, setCurrentNominator] = useState<Player | null>(null);
 
     return <>
         <h2>Game</h2>
-        <p>Current Turn: {game.turns[currentTurn].turnNumber} - Current Phase: {currentPhase}</p>
+        <p>Current Turn: {currentPhase(game).number} - Current Phase: {currentPhase(game).type}</p>
 
-        {currentPhase === 'day' && <Button onClick={() => endDay()}>End Day</Button>}
+        {currentPhase(game).type === 'day' && <Button onClick={() => endDay()}>End Day</Button>}
         <Box marginLeft={10} marginRight={10}>
             {activeNomination() !== null &&
                 <>
@@ -69,19 +63,29 @@ function GamePlayView({game, dispatch}: GamePlayViewProps) {
             }
             {game.players.map(player => <Box key={player.number}>
                 {player.number} - {player.name} - {player.state}
-                {currentPhase === 'day' && player.state === 'alive' && currentNominator === null && activeNomination() === null &&
+                {currentPhase(game).type === 'day' && player.state === 'alive' && currentNominator === null && activeNomination() === null &&
                     <Button onClick={() => setCurrentNominator(player)}>Start Nominate</Button>}
-                {currentPhase === 'day' && player.state === 'alive' && currentNominator === player && activeNomination() === null &&
+                {currentPhase(game).type === 'day' && player.state === 'alive' && currentNominator === player && activeNomination() === null &&
                     <Button
                         onClick={() => setCurrentNominator(null)}>Cancel Nomination</Button>}
-                {currentPhase === 'day' && player.state === 'alive' && currentNominator !== null && currentNominator !== player && activeNomination() === null &&
+                {currentPhase(game).type === 'day' && player.state === 'alive' && currentNominator !== null && currentNominator !== player && activeNomination() === null &&
                     <Button onClick={() => nominate(player)}>Nominate</Button>}
-                {currentPhase === 'day' && player.state === 'alive' && activeNomination() !== null &&
+                {currentPhase(game).type === 'day' && player.state === 'alive' && activeNomination() !== null &&
                     <Checkbox checked={activeNomination()?.votes.includes(player)} onChange={event => {
                         if (event.target.checked) {
-                            dispatch({type: 'addVote', player: player, nomination: activeNomination()!});
+                            dispatch({
+                                type: 'addVote',
+                                player: player,
+                                nomination: activeNomination()!,
+                                phaseNumber: currentPhase(game).number
+                            });
                         } else {
-                            dispatch({type: 'removeVote', player: player, nomination: activeNomination()!});
+                            dispatch({
+                                type: 'removeVote',
+                                player: player,
+                                nomination: activeNomination()!,
+                                phaseNumber: currentPhase(game).number
+                            });
                         }
                     }}/>}
             </Box>)}

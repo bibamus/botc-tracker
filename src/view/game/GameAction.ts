@@ -1,4 +1,4 @@
-import {Nomination, Phase, Player} from "../../model/Game.ts";
+import {Nomination, Player} from "../../model/Game.ts";
 
 interface BaseAction {
     type: string
@@ -23,33 +23,35 @@ export interface StartGameAction extends BaseAction {
     type: 'startGame'
 }
 
-export interface ChangePhaseAction extends BaseAction {
-    type: 'changePhase'
-    phase: Phase
+export interface EndPhaseAction extends BaseAction {
+    type: 'endPhase'
 }
 
 export interface AddNominationAction extends BaseAction {
     type: 'addNomination'
     nominator: Player
     nominee: Player
-    turnNumber: number
+    phaseNumber: number
 }
 
 export interface EndNominationAction extends BaseAction {
     type: 'endNomination'
     nomination: Nomination
+    phaseNumber: number
 }
 
 export interface AddVoteAction extends BaseAction {
     type: 'addVote'
     player: Player
     nomination: Nomination
+    phaseNumber: number
 }
 
 export interface RemoveVoteAction extends BaseAction {
     type: 'removeVote'
     player: Player
     nomination: Nomination
+    phaseNumber: number
 }
 
 export type GameAction =
@@ -57,8 +59,8 @@ export type GameAction =
     | RemovePlayerAction
     | UpdatePlayerNameAction
     | StartGameAction
-    | ChangePhaseAction
     | AddNominationAction
     | EndNominationAction
     | AddVoteAction
-    | RemoveVoteAction;
+    | RemoveVoteAction
+    | EndPhaseAction;

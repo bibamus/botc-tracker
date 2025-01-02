@@ -2,25 +2,11 @@
 export interface Game {
     state: 'setup' | 'playing' | 'finished'
     players: Player[]
-    turns: Turn[]
+    phases: Phase[]
 }
 
-export const initialGame: Game = {
-    state: 'setup',
-    players: [],
-    turns: [
-        {
-            turnNumber: 1,
-            phase: 'day',
-            day: {
-                nominations: []
-            },
-            night: null
-        }
-    ]
-}
 
-export  type Phase = 'day' | 'night'
+export  type Phase = Day | Night;
 
 export interface Player {
     number: number
@@ -29,14 +15,18 @@ export interface Player {
 }
 
 export interface Turn {
-    turnNumber: number
-    phase: Phase
-    day: Day | null
-    night: Night | null
+    number: number
+    type: 'day' | 'night'
 }
 
-export interface Day {
+export interface Day extends Turn {
+    type: 'day'
     nominations: Nomination[]
+}
+
+
+export interface Night extends Turn {
+    type: 'night'
 }
 
 export interface Nomination {
@@ -46,5 +36,17 @@ export interface Nomination {
     ended: boolean
 }
 
-export interface Night {
+export function currentPhase(game: Game): Phase {
+    return game.phases[game.phases.length - 1]
+}
+
+
+export const initialGame: Game = {
+    state: 'setup',
+    players: [],
+    phases: [{
+        number: 1,
+        type: 'day',
+        nominations: []
+    }]
 }

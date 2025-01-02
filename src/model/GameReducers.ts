@@ -1,11 +1,12 @@
-import {Game} from "./Game.ts";
+import {currentPhase, Game} from "./Game.ts";
 import {
-    AddNominationAction, AddVoteAction,
-    ChangePhaseAction,
-    EndNominationAction, GameAction, RemoveVoteAction,
+    AddNominationAction,
+    AddVoteAction,
+    EndNominationAction,
+    GameAction,
+    RemoveVoteAction,
     UpdatePlayerNameAction
 } from "../view/game/GameAction.ts";
-
 
 
 // remove player and renumber the remaining players
@@ -44,76 +45,91 @@ function startGame(state: Game) {
     } satisfies Game;
 }
 
-function changePhase(state: Game, action: ChangePhaseAction) {
-    return {
-        ...state,
-        turns: state.turns.map(turn => ({
-            ...turn,
-            phase: action.phase
-        }))
-    }
-}
 
 function addNomination(state: Game, action: AddNominationAction) {
     return {
         ...state,
-        turns: state.turns.map(turn => turn.turnNumber === action.turnNumber ? {
-            ...turn,
-            day: {
-                nominations: [...turn.day!.nominations, {
+        phases: state.phases
+            .map(phase => phase.number === action.phaseNumber && phase.type === 'day' ? {
+                ...phase,
+                nominations: [...phase.nominations, {
                     nominator: action.nominator,
                     nominee: action.nominee,
                     votes: [],
                     ended: false
                 }]
-            }
-        } : turn)
+            } : phase)
     }
 }
 
 function endNomination(state: Game, action: EndNominationAction) {
     return {
         ...state,
-        turns: state.turns.map(turn => ({
-            ...turn,
-            day: {
-                nominations: turn.day!.nominations.map(nomination => nomination === action.nomination ? {
+        phases: state.phases
+            .map(phase => phase.number === action.phaseNumber && phase.type === 'day' ? {
+                ...phase,
+                nominations: phase.nominations.map(nomination => nomination === action.nomination ? {
                     ...nomination,
                     ended: true
                 } : nomination)
-            }
-        }))
-    } satisfies Game;
+            } : phase)
+    }
+
+
 }
 
 function addVote(state: Game, action: AddVoteAction) {
     return {
         ...state,
-        turns: state.turns.map(turn => ({
-            ...turn,
-            day: {
-                nominations: turn.day!.nominations.map(nomination => nomination === action.nomination ? {
+        phases: state.phases
+            .map(phase => phase.number === action.phaseNumber && phase.type === 'day' ? {
+                ...phase,
+                nominations: phase.nominations.map(nomination => nomination === action.nomination ? {
                     ...nomination,
                     votes: [...nomination.votes, action.player]
                 } : nomination)
-            }
-        }))
+            } : phase)
     }
+
 }
 
 function removeVote(state: Game, action: RemoveVoteAction) {
     return {
         ...state,
-        turns: state.turns.map(turn => ({
-            ...turn,
-            day: {
-                nominations: turn.day!.nominations.map(nomination => nomination === action.nomination ? {
+        phases: state.phases
+            .map(phase => phase.number === action.phaseNumber && phase.type === 'day' ? {
+                ...phase,
+                nominations: phase.nominations.map(nomination => nomination === action.nomination ? {
                     ...nomination,
                     votes: nomination.votes.filter(player => player !== action.player)
                 } : nomination)
-            }
-        }))
+            } : phase)
     }
+
+}
+
+function endPhase(state: Game) {
+    const current = currentPhase(state);
+    if (current.type === 'day') {
+        return {
+            ...state,
+            phases: [...state.phases, {
+                number: current.number,
+                type: 'night'
+            }]
+        } satisfies Game;
+    }
+    if (current.type === 'night') {
+        return {
+            ...state,
+            phases: [...state.phases, {
+                number: current.number + 1,
+                type: 'day',
+                nominations: []
+            }]
+        } satisfies Game;
+    }
+    return state;
 }
 
 export default function gameReducer(state: Game, action: GameAction): Game {
@@ -126,8 +142,6 @@ export default function gameReducer(state: Game, action: GameAction): Game {
             return updatePlayerName(state, action);
         case 'startGame':
             return startGame(state);
-        case 'changePhase':
-            return changePhase(state, action);
         case 'addNomination':
             return addNomination(state, action);
         case 'endNomination':
@@ -136,6 +150,8 @@ export default function gameReducer(state: Game, action: GameAction): Game {
             return addVote(state, action);
         case 'removeVote':
             return removeVote(state, action);
+        case 'endPhase':
+            return endPhase(state);
         default:
             return state;
     }
