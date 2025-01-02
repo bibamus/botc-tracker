@@ -14,7 +14,7 @@ function GameView() {
     const [game, dispatch] = useReducer(gameReducer, initialGame);
 
     return (
-        <Box sx={{marginTop: 0}}>
+        <Box sx={{marginTop: 0}} minHeight={'100%'}>
             {game.state === 'setup' && <GameSetupView game={game} dispatch={dispatch}/>}
             {game.state === 'playing' && <GamePlayView game={game} dispatch={dispatch}/>}
         </Box>

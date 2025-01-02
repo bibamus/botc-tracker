@@ -7,7 +7,7 @@ function App() {
     return (
         <>
             <CssBaseline/>
-            <Box >
+            <Box minHeight={'100%'}>
                 <h1>Blood on the Clocktower - Tracker</h1>
                 <GameView/>
             </Box>

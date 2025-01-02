@@ -1,5 +1,5 @@
 import {currentPhase, Game, Nomination, Player} from "../../model/Game.ts";
-import {Box, Button, Checkbox} from "@mui/material";
+import {Box, Button, Checkbox, List, ListItem} from "@mui/material";
 import {useState} from "react";
 import {GameAction} from "./GameAction.ts";
 
@@ -23,8 +23,7 @@ function GamePlayView({game, dispatch}: GamePlayViewProps) {
         return phase.nominations.find(nomination => !nomination.ended) || null;
     }
 
-    function endDay() {
-        console.log(currentPhase);
+    function endPhase() {
         dispatch({type: 'endPhase'});
     }
 
@@ -42,55 +41,77 @@ function GamePlayView({game, dispatch}: GamePlayViewProps) {
         setCurrentNominator(null);
     }
 
+    const [selectedPhase, setSelectedPhase] = useState({
+        number: 1,
+        type: 'day'
+    });
 
+    function getSelectedPhase() {
+        return game.phases.find(phase => phase.number === selectedPhase.number && phase.type === selectedPhase.type)!;
+    }
 
 
     const [currentNominator, setCurrentNominator] = useState<Player | null>(null);
 
-    return <>
-        <h2>Game</h2>
-        <p>Current Turn: {currentPhase(game).number} - Current Phase: {currentPhase(game).type}</p>
-
-        {currentPhase(game).type === 'day' && <Button onClick={() => endDay()}>End Day</Button>}
-        <Box marginLeft={10} marginRight={10}>
-            {activeNomination() !== null &&
-                <>
-                    <span>{activeNomination()?.votes.length} of needed {neededVotes()} votes</span>
-                    <Button onClick={() => {
-                        endVoting();
-                    }}>End voting</Button>
-                </>
-            }
-            {game.players.map(player => <Box key={player.number}>
-                {player.number} - {player.name} - {player.state}
-                {currentPhase(game).type === 'day' && player.state === 'alive' && currentNominator === null && activeNomination() === null &&
-                    <Button onClick={() => setCurrentNominator(player)}>Start Nominate</Button>}
-                {currentPhase(game).type === 'day' && player.state === 'alive' && currentNominator === player && activeNomination() === null &&
-                    <Button
-                        onClick={() => setCurrentNominator(null)}>Cancel Nomination</Button>}
-                {currentPhase(game).type === 'day' && player.state === 'alive' && currentNominator !== null && currentNominator !== player && activeNomination() === null &&
-                    <Button onClick={() => nominate(player)}>Nominate</Button>}
-                {currentPhase(game).type === 'day' && player.state === 'alive' && activeNomination() !== null &&
-                    <Checkbox checked={activeNomination()?.votes.includes(player)} onChange={event => {
-                        if (event.target.checked) {
-                            dispatch({
-                                type: 'addVote',
-                                player: player,
-                                nomination: activeNomination()!,
-                                phaseNumber: currentPhase(game).number
-                            });
-                        } else {
-                            dispatch({
-                                type: 'removeVote',
-                                player: player,
-                                nomination: activeNomination()!,
-                                phaseNumber: currentPhase(game).number
-                            });
-                        }
-                    }}/>}
-            </Box>)}
+    return <Box display={"flex"}>
+        <Box border={1} marginRight={5} paddingRight={2} paddingLeft={2}>
+            <h2>Phases</h2>
+            <List>
+                {game.phases.map(phase => <ListItem key={phase.number} onClick={() => setSelectedPhase({
+                    number: phase.number,
+                    type: phase.type
+                })}>
+                    {phase.type} {phase.number}
+                </ListItem>)}
+            </List>
         </Box>
-    </>
+        <Box>
+            <h2>Game</h2>
+            <p>{getSelectedPhase().type} {getSelectedPhase().number}</p>
+            {getSelectedPhase() === currentPhase(game) && currentPhase(game).type === 'day' &&
+                <Button onClick={() => endPhase()}>End Day</Button>}
+            {getSelectedPhase() === currentPhase(game) && currentPhase(game).type === 'night' &&
+                <Button onClick={() => endPhase()}>End Night</Button>}
+            <Box marginLeft={10} marginRight={10}>
+                {activeNomination() !== null &&
+                    <>
+                        <span>{activeNomination()?.votes.length} of needed {neededVotes()} votes</span>
+                        <Button onClick={() => {
+                            endVoting();
+                        }}>End voting</Button>
+                    </>
+                }
+                {game.players.map(player => <Box key={player.number}>
+                    {player.number} - {player.name} - {player.state}
+                    {getSelectedPhase().type === 'day' && player.state === 'alive' && currentNominator === null && activeNomination() === null &&
+                        <Button onClick={() => setCurrentNominator(player)}>Start Nominate</Button>}
+                    {getSelectedPhase().type === 'day' && player.state === 'alive' && currentNominator === player && activeNomination() === null &&
+                        <Button
+                            onClick={() => setCurrentNominator(null)}>Cancel Nomination</Button>}
+                    {getSelectedPhase().type === 'day' && player.state === 'alive' && currentNominator !== null && currentNominator !== player && activeNomination() === null &&
+                        <Button onClick={() => nominate(player)}>Nominate</Button>}
+                    {getSelectedPhase().type === 'day' && player.state === 'alive' && activeNomination() !== null &&
+                        <Checkbox checked={activeNomination()?.votes.includes(player)} onChange={event => {
+                            if (event.target.checked) {
+                                dispatch({
+                                    type: 'addVote',
+                                    player: player,
+                                    nomination: activeNomination()!,
+                                    phaseNumber: getSelectedPhase().number
+                                });
+                            } else {
+                                dispatch({
+                                    type: 'removeVote',
+                                    player: player,
+                                    nomination: activeNomination()!,
+                                    phaseNumber: getSelectedPhase().number
+                                });
+                            }
+                        }}/>}
+                </Box>)}
+            </Box>
+        </Box>
+    </Box>
 }
 
 export default GamePlayView
