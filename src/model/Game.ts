@@ -44,12 +44,12 @@ export interface Nomination extends GameEvent {
 
 export interface Execution extends GameEvent {
     type: 'execution'
-    player: Player
+    player: number
 }
 
 export interface Kill extends GameEvent {
     type: 'kill'
-    player: Player
+    player: number
 }
 
 export function currentPhase(game: Game): Phase {

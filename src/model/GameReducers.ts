@@ -2,8 +2,8 @@ import {currentPhase, Game} from "./Game.ts";
 import {
     AddNominationAction,
     AddVoteAction,
-    EndNominationAction,
-    GameAction,
+    EndNominationAction, ExecuteAction,
+    GameAction, KillAction,
     RemoveVoteAction,
     UpdatePlayerNameAction
 } from "./GameAction.ts";
@@ -50,7 +50,7 @@ function addNomination(state: Game, action: AddNominationAction) {
     return {
         ...state,
         phases: state.phases
-            .map(phase => phase.number === action.phaseNumber && phase.type === 'day' ? {
+            .map(phase => phase.number === action.phase && phase.type === 'day' ? {
                 ...phase,
                 nominations: [...phase.nominations, {
                     type: 'nomination',
@@ -67,7 +67,7 @@ function endNomination(state: Game, action: EndNominationAction) {
     return {
         ...state,
         phases: state.phases
-            .map(phase => phase.number === action.phaseNumber && phase.type === 'day' ? {
+            .map(phase => phase.number === action.phase && phase.type === 'day' ? {
                 ...phase,
                 nominations: phase.nominations.map(nomination => nomination === action.nomination ? {
                     ...nomination,
@@ -83,7 +83,7 @@ function addVote(state: Game, action: AddVoteAction) {
     return {
         ...state,
         phases: state.phases
-            .map(phase => phase.number === action.phaseNumber && phase.type === 'day' ? {
+            .map(phase => phase.number === action.phase && phase.type === 'day' ? {
                 ...phase,
                 nominations: phase.nominations.map(nomination => nomination === action.nomination ? {
                     ...nomination,
@@ -98,7 +98,7 @@ function removeVote(state: Game, action: RemoveVoteAction) {
     return {
         ...state,
         phases: state.phases
-            .map(phase => phase.number === action.phaseNumber && phase.type === 'day' ? {
+            .map(phase => phase.number === action.phase && phase.type === 'day' ? {
                 ...phase,
                 nominations: phase.nominations.map(nomination => nomination === action.nomination ? {
                     ...nomination,
@@ -135,6 +135,33 @@ function endPhase(state: Game) {
     return state;
 }
 
+function execute(state: Game, action: ExecuteAction) {
+    return {
+        ...state,
+        phases: state.phases.map((phase, index) => index === action.phase && phase.type === 'day' ? {
+            ...phase,
+            executions: [...phase.executions, {
+                type: 'execution',
+                player: action.player
+            }]
+        } : phase)
+    } satisfies Game;
+}
+
+function kill(state: Game, action: KillAction) {
+    return {
+        ...state,
+        phases: state.phases.map((phase, index) => index === action.phase && phase.type === 'night' ? {
+            ...phase,
+            kills: [...phase.kills, {
+                type: 'kill',
+                player: action.player
+            }]
+        } : phase)
+    } satisfies Game;
+
+}
+
 export default function gameReducer(state: Game, action: GameAction): Game {
     switch (action.type) {
         case 'addPlayer':
@@ -155,6 +182,10 @@ export default function gameReducer(state: Game, action: GameAction): Game {
             return removeVote(state, action);
         case 'endPhase':
             return endPhase(state);
+        case 'execute':
+            return execute(state, action);
+        case 'kill':
+            return kill(state, action);
         default:
             return state;
     }

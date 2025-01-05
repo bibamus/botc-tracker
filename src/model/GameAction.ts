@@ -31,27 +31,39 @@ export interface AddNominationAction extends BaseAction {
     type: 'addNomination'
     nominator: number
     nominee: number
-    phaseNumber: number
+    phase: number
 }
 
 export interface EndNominationAction extends BaseAction {
     type: 'endNomination'
     nomination: Nomination
-    phaseNumber: number
+    phase: number
 }
 
 export interface AddVoteAction extends BaseAction {
     type: 'addVote'
     player: number
     nomination: Nomination
-    phaseNumber: number
+    phase: number
 }
 
 export interface RemoveVoteAction extends BaseAction {
     type: 'removeVote'
     player: number
     nomination: Nomination
-    phaseNumber: number
+    phase: number
+}
+
+export interface ExecuteAction extends BaseAction {
+    type: 'execute'
+    player: number,
+    phase: number
+}
+
+export interface KillAction extends BaseAction {
+    type: 'kill'
+    player: number
+    phase: number
 }
 
 export type GameAction =
@@ -63,4 +75,6 @@ export type GameAction =
     | EndNominationAction
     | AddVoteAction
     | RemoveVoteAction
-    | EndPhaseAction;
+    | EndPhaseAction
+    | ExecuteAction
+    | KillAction;
