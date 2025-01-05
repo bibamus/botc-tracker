@@ -11,7 +11,6 @@ export  type Phase = Day | Night;
 export interface Player {
     number: number
     name: string
-    state: 'alive' | 'executed' | 'killed'
 }
 
 export interface Turn {
@@ -22,18 +21,35 @@ export interface Turn {
 export interface Day extends Turn {
     type: 'day'
     nominations: Nomination[]
+    executions: Execution[]
 }
 
 
 export interface Night extends Turn {
     type: 'night'
+    kills: Kill[]
 }
 
-export interface Nomination {
-    nominator: Player
-    nominee: Player
-    votes: Player[]
+export interface GameEvent {
+    type: string
+}
+
+export interface Nomination extends GameEvent {
+    type: 'nomination'
+    nominator: number
+    nominee: number
+    votes: number[]
     ended: boolean
+}
+
+export interface Execution extends GameEvent {
+    type: 'execution'
+    player: Player
+}
+
+export interface Kill extends GameEvent {
+    type: 'kill'
+    player: Player
 }
 
 export function currentPhase(game: Game): Phase {
@@ -47,6 +63,7 @@ export const initialGame: Game = {
     phases: [{
         number: 1,
         type: 'day',
-        nominations: []
+        nominations: [],
+        executions: []
     }]
 }

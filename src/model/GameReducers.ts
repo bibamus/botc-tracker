@@ -6,7 +6,7 @@ import {
     GameAction,
     RemoveVoteAction,
     UpdatePlayerNameAction
-} from "../view/game/GameAction.ts";
+} from "./GameAction.ts";
 
 
 // remove player and renumber the remaining players
@@ -24,7 +24,7 @@ function removePlayer(state: Game, playerNumber: number) {
 function addPlayer(state: Game) {
     return {
         ...state,
-        players: [...state.players, {name: '', state: 'alive', number: state.players.length + 1}]
+        players: [...state.players, {name: '', number: state.players.length + 1}]
     } satisfies Game;
 }
 
@@ -53,13 +53,14 @@ function addNomination(state: Game, action: AddNominationAction) {
             .map(phase => phase.number === action.phaseNumber && phase.type === 'day' ? {
                 ...phase,
                 nominations: [...phase.nominations, {
+                    type: 'nomination',
                     nominator: action.nominator,
                     nominee: action.nominee,
                     votes: [],
                     ended: false
                 }]
             } : phase)
-    }
+    } satisfies Game;
 }
 
 function endNomination(state: Game, action: EndNominationAction) {
@@ -115,7 +116,8 @@ function endPhase(state: Game) {
             ...state,
             phases: [...state.phases, {
                 number: current.number,
-                type: 'night'
+                type: 'night',
+                kills: []
             }]
         } satisfies Game;
     }
@@ -125,7 +127,8 @@ function endPhase(state: Game) {
             phases: [...state.phases, {
                 number: current.number + 1,
                 type: 'day',
-                nominations: []
+                nominations: [],
+                executions: [],
             }]
         } satisfies Game;
     }
